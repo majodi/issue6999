@@ -1,0 +1,11 @@
+idf_component_register(SRCS "main.c"
+                            "cc_wifi.c"
+                            "cc_webserver.c"
+                            "keep_alive.c"
+                    INCLUDE_DIRS "."
+                    EMBED_TXTFILES "certs/cacert.pem"
+                                   "certs/prvtkey.pem"
+                                   "html/index.html"
+                                   "html/favicon.ico"
+                                   "html/xterm.js"
+                )

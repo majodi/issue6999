@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConsoleCast</title>
+    <style>
+body,html {
+    font-family: proxima-nova, arial, sans-serif;
+    font-style: normal;
+    font-weight: 100;
+    height: 100%;
+    background-color: lightblue;
+}
+
+.box {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+/* .box .row {
+  border: 1px dotted grey;
+} */
+
+.box .row.header {
+  flex: 0 1 auto;
+  /* The above is shorthand for:
+  flex-grow: 0,
+  flex-shrink: 1,
+  flex-basis: auto
+  */
+}
+
+.box .row.content {
+  flex: 1 1 auto;
+}
+
+.box .row.footer {
+  flex: 0 1 40px;
+}
+
+.xterm {
+    height: 100%;
+    font-feature-settings: "liga" 0;
+    position: relative;
+    user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+}
+
+.xterm.focus,
+.xterm:focus {
+    outline: none;
+}
+
+.xterm .xterm-helpers {
+    position: absolute;
+    top: 0;
+    z-index: 5;
+}
+
+.xterm .xterm-helper-textarea {
+    padding: 0;
+    border: 0;
+    margin: 0;
+    position: absolute;
+    opacity: 0;
+    left: -9999em;
+    top: 0;
+    width: 0;
+    height: 0;
+    z-index: -5;
+    white-space: nowrap;
+    overflow: hidden;
+    resize: none;
+}
+
+.xterm .composition-view {
+    background: #000;
+    color: #FFF;
+    display: none;
+    position: absolute;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+.xterm .composition-view.active {
+    display: block;
+}
+
+.xterm .xterm-viewport {
+    background-color: #000;
+    overflow-y: scroll;
+    cursor: default;
+    position: absolute;
+    right: 0;
+    left: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.xterm .xterm-screen {
+    position: relative;
+}
+
+.xterm .xterm-screen canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.xterm .xterm-scroll-area {
+    visibility: hidden;
+}
+
+.xterm-char-measure-element {
+    display: inline-block;
+    visibility: hidden;
+    position: absolute;
+    top: 0;
+    left: -9999em;
+    line-height: normal;
+}
+
+.xterm {
+    cursor: text;
+}
+
+.xterm.enable-mouse-events {
+    cursor: default;
+}
+
+.xterm.xterm-cursor-pointer {
+    cursor: pointer;
+}
+
+.xterm.column-select.focus {
+    cursor: crosshair;
+}
+
+.xterm .xterm-accessibility,
+.xterm .xterm-message {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 10;
+    color: transparent;
+}
+
+.xterm .live-region {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.xterm-dim {
+    opacity: 0.5;
+}
+
+.xterm-underline {
+    text-decoration: underline;
+}
+    </style>
+
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?v=2">
+    <script src="xterm.js"></script>    
+</head>
+
+<body>
+
+<div class="box">
+    <div class="row header">
+        <H1>ConsoleCast</H1>
+        <H3>By NickStick Design</H3>
+    </div>
+    <div class="row content" id="terminal"></div>
+    <div class="row footer">
+      <!-- <p><b>footer</b> (fixed height)</p> -->
+    </div>
+</div>
+
+<script>
+let socket = new WebSocket('wss://cc.local/ws');
+var term = new Terminal();
+term.open(document.getElementById('terminal'));
+term.focus();
+term.write('\x1B[1;3;31m* ConsoleCast on-board terminal *\x1B[0m \r\n\n$ ')
+document.getElementById('terminal').focus;
+
+function prompt(term) {
+    term.write('\r\n$ ');
+}
+
+term.onData(e => {
+  switch (e) {
+    // case '\r': // Enter
+    case '\u0003': // Ctrl+C
+      prompt(term);
+      break;
+    case '\u007F': // Backspace (DEL)
+      // Do not delete the prompt
+      if (term._core.buffer.x > 2) {
+        term.write('\b \b');
+      }
+      break;
+    default:
+        socket.send(e);
+  }
+});
+
+// handle incoming messages
+socket.onmessage = function(event) {
+  let incomingMessage = event.data;
+  term.write(incomingMessage);
+};
+
+socket.onclose = event => console.log(`Closed ${event.code}`);
+</script>
+
+</body>
+</html>
